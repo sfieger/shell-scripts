@@ -6,4 +6,4 @@ Collection of miscellaneous scripts I cobbled together (or found on the internet
 - check-updates  : checks and prints how many packages are upgradeable
 
 # Installation
-Copy the scripts to wherever you like, make dem runnable (if you need to) and have a try.
+Copy the scripts to wherever you like, make them runnable (if you need to) and have a try.
