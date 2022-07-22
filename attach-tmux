@@ -1,5 +1,0 @@
-#!/bin/sh
-
-if [ -x "$(command -v tmux)" ] && [ -n "$PS1" ] && [ -z "${TMUX}" ]; then
-  exec tmux new-session -A -s main
-fi
