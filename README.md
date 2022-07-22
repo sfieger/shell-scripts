@@ -7,4 +7,4 @@ Collection of miscellaneous scripts I cobbled together (or found on the internet
 - attach-tmux    : checks if tmux is installed, we are in an interactive shell and not in an tmux session and attaches/creates to a "main"-session
 
 # Installation
-Copy the scripts to wherever you like, make them runnable (if you need to) and have a try.
+Copy the scripts to wherever you like, make them runnable (chmod +x) and have a try.
