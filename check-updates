@@ -1,3 +1,4 @@
 #!/bin/sh
 # checks for uprgadeable packages
+apt-get update -qq
 apt-get upgrade -s | grep -P '^\d+ upgraded' | cut -d" " -f1 && echo packages upgradeable
