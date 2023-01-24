@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# Wrapper for backing up directories on my Windsows machine to my NAS using
+# rsync in WSL
+# -----------------------------------------------------------------------------
+# Copyright (c) 2023 Steffen Fieger
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+# Using the build-template of Dave Jarvis
+# https://dave.autonoma.ca/
+# -----------------------------------------------------------------------------
+source "$HOME"/bin/shell-template.sh
+
+DEPENDENCIES=(
+  "rsync,https://rsync.samba.org/"
+)
+
+DRIVE="Z:"
+MOUNT="/media/backup"
+SOURCES=("/mnt/d/Dokumente/01_dokumente/" "/mnt/d/Dokumente/02_finanzen/")
+TARGETS=("${MOUNT}/documents/01_dokumente" "${MOUNT}/documents/02_finanzen")
+
+# -----------------------------------------------------------------------------
+# Mounting the NAS
+# -----------------------------------------------------------------------------
+preprocess() {
+  $log "Mounting ${DRIVE} on ${MOUNT}"
+
+  sudo mount.drvfs ${DRIVE} ${MOUNT} > /dev/null 2>&1
+  local -r EXIT_CODE=$?
+
+  if [ ${EXIT_CODE} -ne 0 ]; then
+    error "mount failed with exit code ${EXIT_CODE}."
+
+    return 0
+  fi
+  
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Perform all commands that the script requires.
+#
+# @return 0 - Indicate to terminate the script with non-zero exit level
+# @return 1 - All tasks completed successfully (default)
+# -----------------------------------------------------------------------------
+execute() {
+  for i in "${!SOURCES[@]}"; do
+    $log "backing up ${SOURCES[$i]} to ${TARGETS[$i]}"
+    sudo rsync \
+        --archive \
+        --backup \
+        --backup-dir="${TARGETS[$i]}"/old \
+        --delete \
+        --numeric-ids \
+        --compress \
+        --progress \
+        "${SOURCES[$i]}" "${TARGETS[$i]}"
+  done
+
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Unmounting the NAS
+# -----------------------------------------------------------------------------
+postprocess() {
+  $log "Umnounting ${MOUNT}"
+
+  sudo umount ${MOUNT} > /dev/null 2>&1
+  local -r EXIT_CODE=$?
+
+  if [ ${EXIT_CODE} -ne 0 ]; then
+    error "umount failed with exit code ${EXIT_CODE}."
+
+    return 0
+  fi
+  
+  return 1
+}
+
+main "$@"
