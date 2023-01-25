@@ -29,22 +29,34 @@
 # -----------------------------------------------------------------------------
 source "$HOME"/bin/shell-template.sh
 
+SCRIPT_VERSION="1.0.0"
+
+ARG_DRIVE="Z:"
+ARG_MOUNT="/media/backup"
+ARG_SOURCES=""
+ARG_TARGET="${ARG_MOUNT}/documents"
+
 DEPENDENCIES=(
   "rsync,https://rsync.samba.org/"
 )
 
-DRIVE="Z:"
-MOUNT="/media/backup"
-SOURCES=("/mnt/d/Dokumente/01_dokumente" "/mnt/d/Dokumente/02_finanzen")
-TARGET=("${MOUNT}/documents")
+ARGUMENTS+=(
+  "d,drive,Windows drive (default: ${ARG_DRIVE})"
+  "m,mount,Mountpoint for drive (default: ${ARG_MOUNT})"
+  "s,sources,Comma seperated list of sources"
+  "t,target,Target to backup to (default: ${ARG_TARGET})"
+  "v,version,Print version info and exit"
+)
 
 # -----------------------------------------------------------------------------
 # Mounting the NAS
 # -----------------------------------------------------------------------------
 preprocess() {
-  $log "Mounting ${DRIVE} on ${MOUNT}"
+  $version
 
-  sudo mount.drvfs ${DRIVE} ${MOUNT} > /dev/null 2>&1
+  $log "Mounting ${ARG_DRIVE} on ${ARG_MOUNT}"
+
+  sudo mount.drvfs ${ARG_DRIVE} ${ARG_MOUNT} > /dev/null 2>&1
   local -r EXIT_CODE=$?
 
   if [ ${EXIT_CODE} -ne 0 ]; then
@@ -53,6 +65,11 @@ preprocess() {
     return 0
   fi
   
+  SOURCES=$(echo ${ARG_SOURCES} | sed 's/,/ /g')
+
+  $log "Sources: ${SOURCES}"
+  $log "Target : ${ARG_TARGET}"
+
   return 1
 }
 
@@ -63,16 +80,16 @@ preprocess() {
 # @return 1 - All tasks completed successfully (default)
 # -----------------------------------------------------------------------------
 execute() {
-    $log "backing up ${SOURCES} to ${TARGET}"
+    $log "backing up ${SOURCES} to ${ARG_TARGET}"
     sudo rsync \
         --archive \
         --backup \
-        --backup-dir="${TARGET}"/old \
+        --backup-dir="${ARG_TARGET}"/old \
         --delete \
         --numeric-ids \
         --compress \
         --progress \
-        "${SOURCES}" "${TARGET}"
+        ${SOURCES} "${ARG_TARGET}"
 
   return 1
 }
@@ -81,9 +98,9 @@ execute() {
 # Unmounting the NAS
 # -----------------------------------------------------------------------------
 postprocess() {
-  $log "Umnounting ${MOUNT}"
+  $log "Umnounting ${ARG_MOUNT}"
 
-  sudo umount ${MOUNT} > /dev/null 2>&1
+  sudo umount ${ARG_MOUNT} > /dev/null 2>&1
   local -r EXIT_CODE=$?
 
   if [ ${EXIT_CODE} -ne 0 ]; then
@@ -94,5 +111,51 @@ postprocess() {
   
   return 1
 }
+
+# -----------------------------------------------------------------------------
+# Print version info
+# -----------------------------------------------------------------------------
+utile_version() {
+    printf "%s version %s \n\n" "${SCRIPT_NAME}" "${SCRIPT_VERSION}" >&2
+    
+    printf "Using:\n"
+    rsync --version
+
+    terminate 0
+}
+
+# -----------------------------------------------------------------------------
+# Parses a single command-line argument.
+#
+# @return Number of arguments and options parsed.
+# -----------------------------------------------------------------------------
+argument() {
+  local consume=1
+
+  case "$1" in
+    -d|--drive)
+      ARG_DRIVE="$2"
+      consume=2
+    ;;
+    -m|--mount)
+      ARG_MOUNT="$2"
+      consume=2
+    ;;
+    -s|--sources)
+      ARG_SOURCES="$2"
+      consume=2
+    ;;
+    -t|--target)
+      ARG_TARGET="$2"
+      consume=2
+    ;;
+    -v|--version)
+      version=utile_version
+  esac
+
+  return ${consume}
+}
+
+version=noop
 
 main "$@"
