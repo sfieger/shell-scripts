@@ -35,8 +35,8 @@ DEPENDENCIES=(
 
 DRIVE="Z:"
 MOUNT="/media/backup"
-SOURCES=("/mnt/d/Dokumente/01_dokumente/" "/mnt/d/Dokumente/02_finanzen/")
-TARGETS=("${MOUNT}/documents/01_dokumente" "${MOUNT}/documents/02_finanzen")
+SOURCES=("/mnt/d/Dokumente/01_dokumente" "/mnt/d/Dokumente/02_finanzen")
+TARGET=("${MOUNT}/documents")
 
 # -----------------------------------------------------------------------------
 # Mounting the NAS
@@ -63,18 +63,16 @@ preprocess() {
 # @return 1 - All tasks completed successfully (default)
 # -----------------------------------------------------------------------------
 execute() {
-  for i in "${!SOURCES[@]}"; do
-    $log "backing up ${SOURCES[$i]} to ${TARGETS[$i]}"
+    $log "backing up ${SOURCES} to ${TARGET}"
     sudo rsync \
         --archive \
         --backup \
-        --backup-dir="${TARGETS[$i]}"/old \
+        --backup-dir="${TARGET}"/old \
         --delete \
         --numeric-ids \
         --compress \
         --progress \
-        "${SOURCES[$i]}" "${TARGETS[$i]}"
-  done
+        "${SOURCES}" "${TARGET}"
 
   return 1
 }
