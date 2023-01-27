@@ -29,7 +29,7 @@
 # -----------------------------------------------------------------------------
 source "$HOME"/bin/shell-template.sh
 
-SCRIPT_VERSION="1.0.0"
+SCRIPT_VERSION="1.0.1"
 
 ARG_DRIVE="Z:"
 ARG_MOUNT="/media/backup"
@@ -88,7 +88,6 @@ execute() {
         --delete \
         --numeric-ids \
         --compress \
-        --progress \
         ${SOURCES} "${ARG_TARGET}"
 
   return 1
