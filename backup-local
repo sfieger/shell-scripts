@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# Script for backing up data with rsync using Tower of Hanoi rotation method
+# -----------------------------------------------------------------------------
+# Copyright (c) 2023 Steffen Fieger
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+# Using the build-template of Dave Jarvis
+# https://dave.autonoma.ca/
+# -----------------------------------------------------------------------------
+source "$HOME"/bin/shell-template.sh
+
+SCRIPT_VERSION="1.0.0"
+
+ARG_DAY=$(echo $(date +%j) | sed 's/^0*//')
+ARG_MOUNT="/media/backup"
+ARG_TARGET="${ARG_MOUNT}"
+
+DEPENDENCIES=(
+  "rsync,https://rsync.samba.org/"
+)
+
+ARGUMENTS+=(
+  "d,day,Day of the year (default: ${ARG_DAY})"
+  "i,uuid,UUID of the backup drive"
+  "m,mount,Mountpoint for backup (default: ${ARG_MOUNT}"
+  "s,sources,Comma seperated list of sources"
+  "t,target,Backup target (default: ${ARG_TARGET}"
+  "v,version,Print version info and exit"
+)
+
+# -----------------------------------------------------------------------------
+# Mounting the backup drive
+# -----------------------------------------------------------------------------
+preprocess() {
+  $version
+
+  $log "Mounting ${ARG_UUID} on ${ARG_MOUNT}"
+
+  sudo mount -U "${ARG_UUID}" "${ARG_MOUNT}" > /dev/null 2>&1
+  local -r EXIT_CODE=$?
+
+  if [ ${EXIT_CODE} -ne 0 ]; then
+    error "mount failed with exit code ${EXIT_CODE}."
+
+    return 0
+  fi
+
+  SOURCES="${ARG_SOURCES}"
+  SOURCES=$(echo ${SOURCES} | sed 's/,/ /g')
+
+  $log "Sources: ${SOURCES}"
+  $log "Target : ${ARG_TARGET}"
+
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Perform all commands that the script requires.
+#
+# @return 0 - Indicate to terminate the script with non-zero exit level
+# @return 1 - All tasks completed successfully (default)
+# -----------------------------------------------------------------------------
+execute() {
+  $log "getting Tower of Hanoi (target folder)"
+  target_folder
+
+  $log "backing up ${SOURCES} to ${ARG_TARGET}/${TARGET_FOLDER}"
+
+  if [ "${TARGET_FOLDER}" == "f" ]; then
+    sudo rsync \
+      --archive \
+      --checksum \
+      --delete \
+      ${SOURCES} "${ARG_TARGET}/${TARGET_FOLDER}"
+  else
+    sudo rsync \
+      --archive \
+      --delete \
+      ${SOURCES} "${ARG_TARGET}/${TARGET_FOLDER}"
+  fi
+
+  $log "Last written: ${ARG_TARGET}/${TARGET_FOLDER}"
+  echo "[$(date)] Last written: ${TARGET_FOLDER}" >> "${ARG_TARGET}"/log.backup
+
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Unmounting the NAS
+# -----------------------------------------------------------------------------
+postprocess() {
+  $log "Umnounting ${ARG_MOUNT}"
+
+  sudo umount ${ARG_MOUNT} > /dev/null 2>&1
+  local -r EXIT_CODE=$?
+
+  if [ ${EXIT_CODE} -ne 0 ]; then
+    error "umount failed with exit code ${EXIT_CODE}."
+
+    return 0
+  fi
+
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Print version info
+# -----------------------------------------------------------------------------
+utile_version() {
+    printf "%s version %s \n\n" "${SCRIPT_NAME}" "${SCRIPT_VERSION}" >&2
+
+    printf "Using:\n"
+    rsync --version
+
+    terminate 0
+}
+
+# -----------------------------------------------------------------------------
+# Get the Hanoi-Tower
+# -----------------------------------------------------------------------------
+target_folder() {
+  MOD37=$(((-$ARG_DAY & $ARG_DAY) % 37))
+  LOOKUP=(32 0 1 26 2 23 27 0 3 16 24 30 28 11 0 13 4 7 17 0 25 22 31 15 29 10 12 6 0 21 14 9 5 20 8 19 18)
+
+  if (( ${LOOKUP[$MOD37]} == 0 )); then
+    TARGET_FOLDER="a"
+  elif (( ${LOOKUP[$MOD37]} == 1 )); then
+    TARGET_FOLDER="b"
+  elif (( ${LOOKUP[$MOD37]} == 2 )); then
+    TARGET_FOLDER="c"
+  elif (( ${LOOKUP[$MOD37]} == 3 )); then
+    TARGET_FOLDER="d"
+  elif (( ${LOOKUP[$MOD37]} == 4 )); then
+    TARGET_FOLDER="e"
+  else
+    TARGET_FOLDER="f"
+  fi
+}
+
+# -----------------------------------------------------------------------------
+# Parses a single command-line argument.
+#
+# @return Number of arguments and options parsed.
+# -----------------------------------------------------------------------------
+argument() {
+  local consume=1
+
+  case "$1" in
+    -d|--day)
+      ARG_DAY="$2"
+      consume=2
+    ;;
+    -i|--uuid)
+      ARG_UUID="$2"
+      consume=2
+    ;;
+    -m|--mount)
+      ARG_MOUNT="$2"
+      consume=2
+    ;;
+    -s|--sources)
+      ARG_SOURCES="$2"
+      consume=2
+    ;;
+    -t|--target)
+      ARG_TARGET="$2"
+      consume=2
+    ;;
+    -v|--version)
+      version=utile_version
+  esac
+
+  return ${consume}
+}
+
+version=noop
+
+main "$@"
