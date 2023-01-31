@@ -26,9 +26,9 @@
 # Using the build-template of Dave Jarvis
 # https://dave.autonoma.ca/
 # -----------------------------------------------------------------------------
-source "$HOME"/bin/shell-template.sh
+source /usr/local/bin/shell-template.sh
 
-SCRIPT_VERSION="1.0.0"
+SCRIPT_VERSION="1.0.1"
 
 ARG_DAY=$(echo $(date +%j) | sed 's/^0*//')
 ARG_MOUNT="/media/backup"
@@ -86,7 +86,7 @@ execute() {
   $log "backing up ${SOURCES} to ${ARG_TARGET}/${TARGET_FOLDER}"
 
   if [ "${TARGET_FOLDER}" == "f" ]; then
-    sudo rsync \
+    sudo sync \
       --archive \
       --checksum \
       --delete \
