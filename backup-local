@@ -28,7 +28,7 @@
 # -----------------------------------------------------------------------------
 source /usr/local/bin/shell-template.sh
 
-SCRIPT_VERSION="1.0.1"
+SCRIPT_VERSION="1.0.2"
 
 ARG_DAY=$(echo $(date +%j) | sed 's/^0*//')
 ARG_MOUNT="/media/backup"
@@ -41,9 +41,9 @@ DEPENDENCIES=(
 ARGUMENTS+=(
   "d,day,Day of the year (default: ${ARG_DAY})"
   "i,uuid,UUID of the backup drive"
-  "m,mount,Mountpoint for backup (default: ${ARG_MOUNT}"
+  "m,mount,Mountpoint for backup (default: ${ARG_MOUNT})"
   "s,sources,Comma seperated list of sources"
-  "t,target,Backup target (default: ${ARG_TARGET}"
+  "t,target,Backup target (default: ${ARG_TARGET})"
   "v,version,Print version info and exit"
 )
 
