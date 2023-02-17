@@ -45,15 +45,12 @@ ARGUMENTS+=(
   "m,mount,Mountpoint for backup (default: ${ARG_MOUNT})"
   "s,sources,Comma seperated list of sources"
   "t,target,Backup target (default: ${ARG_TARGET})"
-  "v,version,Print version info and exit"
 )
 
 # -----------------------------------------------------------------------------
 # Mounting the backup drive
 # -----------------------------------------------------------------------------
 preprocess() {
-  $version
-
   $log "Date: ${DATE}"
   $log "Mounting ${ARG_UUID} on ${ARG_MOUNT}"
 
@@ -125,18 +122,6 @@ postprocess() {
 }
 
 # -----------------------------------------------------------------------------
-# Print version info
-# -----------------------------------------------------------------------------
-utile_version() {
-    printf "%s version %s \n\n" "${SCRIPT_NAME}" "${SCRIPT_VERSION}" >&2
-
-    printf "Using:\n"
-    rsync --version
-
-    terminate 0
-}
-
-# -----------------------------------------------------------------------------
 # Get the Hanoi-Tower
 # -----------------------------------------------------------------------------
 target_folder() {
@@ -186,14 +171,9 @@ argument() {
     -t|--target)
       ARG_TARGET="$2"
       consume=2
-    ;;
-    -v|--version)
-      version=utile_version
   esac
 
   return ${consume}
 }
-
-version=noop
 
 main "$@"

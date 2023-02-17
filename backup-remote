@@ -5,7 +5,7 @@
 # rsync in WSL
 # -----------------------------------------------------------------------------
 # Copyright (c) 2023 Steffen Fieger
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -44,15 +44,12 @@ ARGUMENTS+=(
   "m,mount,Mountpoint for drive (default: ${ARG_MOUNT})"
   "s,sources,Comma seperated list of sources"
   "t,target,Target to backup to (default: ${ARG_TARGET})"
-  "v,version,Print version info and exit"
 )
 
 # -----------------------------------------------------------------------------
 # Mounting the NAS
 # -----------------------------------------------------------------------------
 preprocess() {
-  $version
-
   $log "Mounting ${ARG_DRIVE} on ${ARG_MOUNT}"
 
   sudo mount.drvfs ${ARG_DRIVE} ${ARG_MOUNT} > /dev/null 2>&1
@@ -112,18 +109,6 @@ postprocess() {
 }
 
 # -----------------------------------------------------------------------------
-# Print version info
-# -----------------------------------------------------------------------------
-utile_version() {
-    printf "%s version %s \n\n" "${SCRIPT_NAME}" "${SCRIPT_VERSION}" >&2
-    
-    printf "Using:\n"
-    rsync --version
-
-    terminate 0
-}
-
-# -----------------------------------------------------------------------------
 # Parses a single command-line argument.
 #
 # @return Number of arguments and options parsed.
@@ -147,14 +132,9 @@ argument() {
     -t|--target)
       ARG_TARGET="$2"
       consume=2
-    ;;
-    -v|--version)
-      version=utile_version
   esac
 
   return ${consume}
 }
-
-version=noop
 
 main "$@"
