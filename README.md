@@ -1,5 +1,7 @@
 # misc-scripts
-Collection of miscellaneous scripts I cobbled together (or found on the internet and changed them how I needed them) to acomplish things on different machines.
+Collection of miscellaneous scripts I cobbled together (or found on the internet and edited how I needed them) to acomplish things on different machines.
+
+Some of them use the build-template of [Dave Jarvis](https://dave.autonoma.ca/) published under MIT License (I just renamed it to resemble what it is for me)
 
 ## Debian (and probably Ubuntu)
 - start-services : starts services I use daily on my work-machines WSL2 Debian instance
