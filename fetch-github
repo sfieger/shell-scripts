@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# Script for fetching multiple git-repos from github
+# The given repositories must have a remote named github configured
+# -----------------------------------------------------------------------------
+# Copyright (c) 2023 Steffen Fieger
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+# Using the build-template of Dave Jarvis
+# https://dave.autonoma.ca/
+# -----------------------------------------------------------------------------
+source /usr/local/bin/shell-template.sh
+
+SCRIPT_VERSION="1.0.0"
+
+DEPENDENCIES=(
+  "git,https://git-scm.com/"
+)
+
+ARGUMENTS+=(
+  "r,repositories,Comma seperated list of repositories to fetch from github"
+)
+
+# -----------------------------------------------------------------------------
+# getting the list of repositories
+# -----------------------------------------------------------------------------
+preprocess() {
+  REPOS="${ARG_REPOS}"
+  REPOS=$(echo ${REPOS} | sed 's/,/ /g')
+  $log "Repositories: ${REPOS}"
+  return 1
+}
+
+# -----------------------------------------------------------------------------
+# Perform all commands that the script requires.
+#
+# @return 0 - Indicate to terminate the script with non-zero exit level
+# @return 1 - All tasks completed successfully (default)
+# -----------------------------------------------------------------------------
+execute() {
+  for R in ${REPOS}; do
+    $log "Fetching repository ${R}"
+    cd ${R}
+    git fetch github main:main
+  done
+}
+
+# -----------------------------------------------------------------------------
+# Parses a single command-line argument.
+#
+# @return Number of arguments and options parsed.
+# -----------------------------------------------------------------------------
+argument() {
+  local consume=1
+  case "$1" in
+    -r|--repositories)
+      ARG_REPOS="$2"
+      consume=2
+  esac
+
+  return ${consume}
+}
+
+main "$@"
