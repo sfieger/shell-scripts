@@ -1,6 +1,11 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # checks for uprgadeable packages
+
 sudo apt-get update -qq
 NUM=$(apt-get upgrade -s | grep -P '^\d+ upgraded' | cut -d" " -f1)
 
-echo ${NUM} packages upgradeable
+if [[ ${NUM} -eq 1 ]] ; then
+    echo ${NUM} package upgradeable
+else
+    echo ${NUM} packages upgradeable
+fi
