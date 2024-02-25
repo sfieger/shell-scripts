@@ -27,7 +27,15 @@ EOF
 
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
+  
+  msg "Unmounting ${mount}"
+  
   sudo umount ${mount} > /dev/null 2>&1
+
+  exit_code=$?
+  if [[ ${exit_code} -ne 0 ]] ; then
+    die "${RED} umount failed with exit code ${exit_code}."
+  fi
 }
 
 setup_colors() {
@@ -95,8 +103,9 @@ msg "Mounting ${uuid} on ${mount}"
 
 sudo mount -U "${uuid}" "${mount}" > /dev/null 2>&1
 
-if [[ $? -ne 0 ]] ; then
-    die "${RED} mount failed with exit code $?."
+exit_code=$?
+if [[ ${exit_code} -ne 0 ]] ; then
+    die "${RED} mount failed with exit code ${exit_code}."
 fi
 
 sources="${args[@]}"
@@ -107,15 +116,15 @@ msg "Target: ${target}"
 mod37=$(((-$day & $day) % 37))
 lookup=(32 0 1 26 2 23 27 0 3 16 24 30 28 11 0 13 4 7 17 0 25 22 31 15 29 10 12 6 0 21 14 9 5 20 8 19 18)
 
-if [[ ${lookup[$mod37]} -eq 0 ]] ; then
+if [[ ${lookup[${mod37}]} -eq 0 ]] ; then
     target_folder="a"
-elif [[ ${lookup[$mod37]} -eq 1 ]] ; then
+elif [[ ${lookup[${mod37}]} -eq 1 ]] ; then
     target_folder="b"
-elif [[ ${lookup[$mod37]} -eq 2 ]] ; then
+elif [[ ${lookup[${mod37}]} -eq 2 ]] ; then
     target_folder="c"
-elif [[ ${lookup[$mod37]} -eq 3 ]] ; then
+elif [[ ${lookup[${mod37}]} -eq 3 ]] ; then
     target_folder="d"
-elif [[ ${lookup[$mod37]} -eq 4 ]] ; then
+elif [[ ${lookup[${mod37}]} -eq 4 ]] ; then
     target_folder="e"
 else
     target_folder="f"
@@ -123,7 +132,7 @@ fi
 
 msg "backing up ${sources} to ${target}/${target_folder}"
 
-if [[ "${target_folder}" -eq "f" ]] ; then
+if [[ "${target_folder}" == "f" ]] ; then
     sudo rsync \
         --archive \
         --checksum \
@@ -137,6 +146,6 @@ else
 fi
 
 msg "Last written: ${target}/${target_folder}"
-echo "[$(date)] Last written: ${TARGET_FOLDER}" >> "${ARG_TARGET}"/log.backup
+echo "[$(date)] Last written: ${target_folder}" >> "${target}"/log.backup
 
 cleanup
